@@ -21,11 +21,17 @@
     "license": "Apache-2.0",
     "repository": {
         "type": "git",
-        "url": "https://github.com/GoogleCloudPlatform/node-red-contrib-google-cloud.git"
+        "url": "https://github.com/smuehlst/node-red-contrib-google-cloud.git"
     },
     "author": {
         "name": "Cloud Partner Engineering",
         "email": "cloud-partner-eng@google.com",
         "url": "https://cloud.google.com/partners/"
-    }
+    },
+	"contributors": [
+		{
+			"name": "Stephan Mühlstrasser",
+			"email": "stephan.muehlstrasser@gmail.com"
+		}
+	]
 }
