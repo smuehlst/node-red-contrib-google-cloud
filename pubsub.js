@@ -53,12 +53,13 @@ module.exports = function(RED) {
      */
     function MqttToPubSub(message) {
         const date = new Date(message.time || Date.now());
-        return {
-            data: message.payload,
-            attributes: {
-                timestamp: date.toISOString()
-            }
-        };
+        return Buffer.from(
+            JSON.stringify({
+                data: message.payload,
+                attributes: {
+                    timestamp: date.toISOString()
+                }
+        }));
     }
 
     /**
@@ -202,30 +203,27 @@ module.exports = function(RED) {
 
         node.status(STATUS_DISCONNECTED);
 
-        function OnPublished(error, messageIds) {
-            if (messageIds != null) {
-                if (Array.isArray(messageIds)) {
-                    state.pending -= messageIds.length;
-                } else {
-                    state.pending -= 1;
-                }
-            }
-            if (state.pending == 0) {
-                node.status(STATUS_CONNECTED);
-            }
-            if (error != null) {
-                node.error(error);
-            }
-            if (state.done && state.pending == 0) {
-                node.status(STATUS_DISCONNECTED);
-                state.done();
-            }
-        }
-
         function OnInput(message) {
             if (message == null || !message.payload || message.payload == "")
                 return;
-            state.topic.publish(MqttToPubSub(message), { raw: true }, OnPublished);
+            state.topic
+                .publisher()
+                .publish(MqttToPubSub(message))
+                .then(messageId => {
+                    state.pending -= 1;
+
+                    if (state.pending == 0) {
+                        node.status(STATUS_CONNECTED);
+                    }
+
+                    if (state.done && state.pending == 0) {
+                        node.status(STATUS_DISCONNECTED);
+                        state.done();
+                    }
+                })
+                .catch(err => {
+                    node.error(error);
+                });
             if (state.pending == 0)
                 node.status(STATUS_PUBLISHING);
             state.pending += 1;
@@ -259,7 +257,7 @@ module.exports = function(RED) {
         }
 
         if (credentials) {
-            state.pubsub = PubSub({
+            state.pubsub = new PubSub({
                 credentials: credentials
             });
             node.status(STATUS_CONNECTING);
