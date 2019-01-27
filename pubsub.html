@@ -138,3 +138,64 @@ RED.nodes.registerType("google-cloud-pubsub out", {
     paletteLabel: "pubsub"
 });
 </script>
+
+<script type="text/x-red" data-template-name="google-cloud-iot-command out">
+    <div class="form-row">
+        <label for="node-input-account"><i class="fa fa-user"></i> Credentials</label>
+        <input type="text" id="node-input-account">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-tag"></i> Device</label>
+        <input type="text" id="node-input-deviceId">
+    </div>
+    <div class="form-row">
+        <label for="node-input-registryId"><i class="fa fa-tag"></i> Registry</label>
+        <input type="text" id="node-input-registryId">
+    </div>
+    <div class="form-row">
+        <label for="node-input-projectId"><i class="fa fa-tag"></i> Project</label>
+        <input type="text" id="node-input-projectId">
+    </div>
+    <div class="form-row">
+        <label for="node-input-cloudRegion"><i class="fa fa-tag"></i> Region</label>
+        <input type="text" id="node-input-cloudRegion">
+    </div>
+</script>
+
+<script type="text/x-red" data-help-name="google-cloud-iot-command out">
+    <p>Connects to <a href="https://cloud.google.com/iot/docs/" target="_blank">Google Cloud IoT Core</a> to send a command to an IoT device.</p>
+    <p>Send a command with the properties:</p>
+    <ul>
+        <li><code>msg.deviceId</code></li>
+        <li><code>msg.registryId</code></li>
+        <li><code>msg.projectId</code></li>
+        <li><code>msg.cloudRegion</code></li>
+    </ul>
+    <p><code>msg.deviceId</code> is the id of the device to send the command to.</p>
+    <p><code>msg.registryId</code> is the IoT registry where the device is registered.</p>
+    <p><code>msg.projectId</code> is project id.</p>
+    <p><code>msg.cloudRegion</code> is the Google cloud region.</p>
+</script>
+
+<script type="text/javascript">
+RED.nodes.registerType("google-cloud-iot-command out", {
+    category: "output",
+    defaults: {
+        account: { type: "google-cloud-credentials", required: true },
+        deviceId: { value: "", required: false },
+        registryId: { value: "", required: false },
+        projectId: { value: "", required: false },
+        cloudRegion: { value: "", required: false },
+        name: { value: "", required: false }
+    },
+    inputs: 1,
+    outputs: 0,
+    icon: "cloudpubsub.png",
+    align: "right",
+    color: "#3FADB5",
+    label: function () {
+        return this.name || this.topic || "iot-command";
+    },
+    paletteLabel: "iot-command"
+});
+</script>

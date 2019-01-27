@@ -40,6 +40,10 @@ module.exports = function(RED) {
     };
 
     const {PubSub} = require("@google-cloud/pubsub");
+    const {google} = require('googleapis');
+
+    const API_VERSION = 'v1';
+    const DISCOVERY_API = 'https://cloudiot.googleapis.com/$discovery/rest';
 
     /**
      * Extract JSON service account key from "google-cloud-credentials" config node.
@@ -271,4 +275,131 @@ module.exports = function(RED) {
         node.on("close", OnClose);
     }
     RED.nodes.registerType("google-cloud-pubsub out", GoogleCloudPubSubOutNode);
+
+   
+   function GoogleCloudPubSubCommandNode(config) {
+       RED.nodes.createNode(this, config);
+       
+       const node = this,
+       credentials = GetCredentials(config.account),
+       state = {
+           client: null,
+           deviceId: config.deviceId,
+           registryId: config.registryId,
+           projectId: config.projectId,
+           cloudRegion: config.cloudRegion,
+           
+           done: null,
+           pending: 0
+        };
+        
+        node.status(STATUS_CONNECTING);
+        
+
+        // sends a command to a specified device subscribed to the commands topic
+        function sendCommand(
+            deviceId,
+            registryId,
+            projectId,
+            cloudRegion,
+            commandMessage
+        ) {
+            // [START iot_send_command]
+            // Client retrieved in callback
+            // getClient(serviceAccountJson, function(client) {...});
+            // const cloudRegion = 'us-central1';
+            // const deviceId = 'my-device';
+            // const projectId = 'adjective-noun-123';
+            // const registryId = 'my-registry';
+            const parentName = `projects/${projectId}/locations/${cloudRegion}`;
+            const registryName = `${parentName}/registries/${registryId}`;
+     
+            const binaryData = Buffer.from(commandMessage).toString('base64');
+     
+            // NOTE: The device must be subscribed to the wildcard subfolder
+            // or you should pass a subfolder
+            const request = {
+                name: `${registryName}/devices/${deviceId}`,
+                binaryData: binaryData,
+                //subfolder: <your-subfolder>
+            };
+     
+            state.client.projects.locations.registries.devices.sendCommandToDevice(
+                request,
+                (err, data) => {
+                    if (err) {
+                        node.error('Could not send command: ' + JSON.stringify(request));
+                        node.error('Error: ' + err);
+                    }
+                }
+            );
+            // [END iot_send_command]
+        }
+
+        function OnInput(message) {
+            if (message == null || !message.payload || message.payload == "")
+                return;
+
+            sendCommand(
+                message.deviceId || state.deviceId,
+                message.registryId || state.registryId,
+                message.projectId || state.projectId,
+                message.cloudRegion || state.cloudRegion,
+                message.payload
+            );
+
+            if (state.pending == 0)
+                node.status(STATUS_PUBLISHING);
+            state.pending += 1;
+        }
+
+        function OnClose(done) {
+            state.client = null;
+            state.deviceId = null;
+            state.registryId = null;
+            state.projectId = null;
+            state.cloudRegion = null;
+            node.removeListener("input", OnInput);
+            if (state.pending == 0) {
+                node.status(STATUS_DISCONNECTED);
+                done();
+            } else {
+                state.done = done;
+            }
+        }
+
+        if (credentials) {
+            google.auth
+                .getClient({
+                    credentials: credentials,
+                    scopes: ['https://www.googleapis.com/auth/cloud-platform'],
+                })
+                .then(authClient => {
+                    const discoveryUrl = `${DISCOVERY_API}?version=${API_VERSION}`;
+
+                    google.options({
+                        auth: authClient,
+                    });
+
+                    google
+                        .discoverAPI(discoveryUrl)
+                        .then(client => {
+                            state.client = client;
+                            node.status(STATUS_CONNECTED);
+                        })
+                        .catch(err => {
+                            node.log('Error during API discovery.' + err);
+                            node.status(STATUS_DISCONNECTED);
+                        });
+                });
+        } else {
+            node.error("missing credentials");
+            node.status(STATUS_DISCONNECTED);
+        }
+
+        node.on("input", OnInput);
+        node.on("close", OnClose);
+    }
+
+    RED.nodes.registerType("google-cloud-iot-command out", GoogleCloudPubSubCommandNode);
 }
