@@ -275,26 +275,21 @@ module.exports = function(RED) {
         node.on("close", OnClose);
     }
     RED.nodes.registerType("google-cloud-pubsub out", GoogleCloudPubSubOutNode);
-
    
-   function GoogleCloudPubSubCommandNode(config) {
-       RED.nodes.createNode(this, config);
-       
-       const node = this,
-       credentials = GetCredentials(config.account),
-       state = {
-           client: null,
-           deviceId: config.deviceId,
-           registryId: config.registryId,
-           projectId: config.projectId,
-           cloudRegion: config.cloudRegion,
-           
-           done: null,
-           pending: 0
-        };
-        
+    function GoogleCloudPubSubCommandNode(config) {
+        RED.nodes.createNode(this, config);
+
+        const node = this,
+            credentials = GetCredentials(config.account),
+            state = {
+                client: null,
+                deviceId: config.deviceId,
+                registryId: config.registryId,
+                projectId: config.projectId,
+                cloudRegion: config.cloudRegion,
+            };
+
         node.status(STATUS_CONNECTING);
-        
 
         // sends a command to a specified device subscribed to the commands topic
         function sendCommand(
@@ -305,17 +300,11 @@ module.exports = function(RED) {
             commandMessage
         ) {
             // [START iot_send_command]
-            // Client retrieved in callback
-            // getClient(serviceAccountJson, function(client) {...});
-            // const cloudRegion = 'us-central1';
-            // const deviceId = 'my-device';
-            // const projectId = 'adjective-noun-123';
-            // const registryId = 'my-registry';
             const parentName = `projects/${projectId}/locations/${cloudRegion}`;
             const registryName = `${parentName}/registries/${registryId}`;
-     
+
             const binaryData = Buffer.from(commandMessage).toString('base64');
-     
+
             // NOTE: The device must be subscribed to the wildcard subfolder
             // or you should pass a subfolder
             const request = {
@@ -323,7 +312,7 @@ module.exports = function(RED) {
                 binaryData: binaryData,
                 //subfolder: <your-subfolder>
             };
-     
+
             state.client.projects.locations.registries.devices.sendCommandToDevice(
                 request,
                 (err, data) => {
@@ -347,25 +336,16 @@ module.exports = function(RED) {
                 message.cloudRegion || state.cloudRegion,
                 message.payload
             );
-
-            if (state.pending == 0)
-                node.status(STATUS_PUBLISHING);
-            state.pending += 1;
         }
 
-        function OnClose(done) {
+        function OnClose() {
             state.client = null;
             state.deviceId = null;
             state.registryId = null;
             state.projectId = null;
             state.cloudRegion = null;
             node.removeListener("input", OnInput);
-            if (state.pending == 0) {
-                node.status(STATUS_DISCONNECTED);
-                done();
-            } else {
-                state.done = done;
-            }
+            node.status(STATUS_DISCONNECTED);
         }
 
         if (credentials) {
