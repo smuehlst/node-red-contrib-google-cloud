@@ -87,6 +87,7 @@ Click deploy. If everything goes well the pubsub nodes should change their statu
 | Property                    | Type          | Description                                                                              |
 | --------------------------- | ------------- | ---------------------------------------------------------------------------------------- |
 | **payload**                 | `string`      | The payload passed as-is from the PubSub message.                                        |
+| **attributes**              | `object`      | The `attributes` field passed as-is from the PubSub message (includes device name).      |
 | **time**                    | `date`        | The timestamp converted to the number of milliseconds since 1 January 1970 UTC.          |
 | **project**                 | `string`      | The name of Google Cloud Platform project.                                               |
 | **topic**                   | `string`      | The name of the topic in Google Cloud Platform.                                          |

@@ -73,6 +73,7 @@ module.exports = function(RED) {
         const path = subscription.name.split("/");
         return {
             payload: message.data,
+            attributes: message.attributes,
             time: Date.parse(message.publishTime),
             project: path[path.length - 3],
             topic: topic,
