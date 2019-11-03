@@ -75,7 +75,9 @@ module.exports = function(RED) {
             }
 
             const msg = {
-                payload: message.data
+                payload: message.data,
+                attributes: message.attributes,
+                time: Date.parse(message.publishTime),
             };
 
             // If the configuration property asked for JSON, then convert to an object.
