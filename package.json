@@ -35,6 +35,7 @@
             "google-cloud-credentials": "credentials.js",
             "google-cloud-pubsub in": "pubsub-in.js",
             "google-cloud-pubsub out": "pubsub-out.js",
+            "google-cloud-iot-command out": "command-out.js",
             "google-cloud-log": "stackdriver-log.js",
             "google-cloud-gcs-write": "gcs-write.js",
             "google-cloud-gcs-read": "gcs-read.js",
