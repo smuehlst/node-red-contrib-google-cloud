@@ -41,6 +41,10 @@ module.exports = function(RED) {
 
     const {PubSub} = require("@google-cloud/pubsub");
 
+    const {google} = require('googleapis');
+    const API_VERSION = 'v1';
+    const DISCOVERY_API = 'https://cloudiot.googleapis.com/$discovery/rest';
+
     /**
      * Extract JSON service account key from "google-cloud-credentials" config node.
      */
